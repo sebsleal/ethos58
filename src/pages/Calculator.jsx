@@ -12,6 +12,7 @@ const Calculator = () => {
   });
   const [precisionMode, setPrecisionMode] = useState(false);
   const [pumpOctane, setPumpOctane] = useState(93);
+  const [pumpEthanol, setPumpEthanol] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
@@ -28,12 +29,14 @@ const Calculator = () => {
         current_ethanol_percent: formData.currentE,
         target_ethanol_percent:  formData.targetE,
         tank_size:               formData.tankSize,
+        pump_ethanol_percent:    pumpEthanol,
         precision_mode:          precisionMode,
       });
       const mapped = {
         e85Gallons:          data.gallons_of_e85_to_add,
         pumpGallons:         data.gallons_of_93_to_add,
         pumpOctane,
+        pumpEthanol,
         resultingBlend:      data.resulting_percent,
         precisionModeActive: data.precision_mode,
         fillSteps:           data.fill_steps   ?? null,
@@ -76,7 +79,7 @@ const Calculator = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wide">Pump Octane</span>
             <div className="flex rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
               {[91, 93].map(oct => (
@@ -86,6 +89,26 @@ const Calculator = () => {
                   className={`px-4 py-1.5 text-xs font-bold transition-colors ${pumpOctane === oct ? 'bg-slate-900 dark:bg-brand-500 text-white' : 'bg-white dark:bg-zinc-950 text-slate-500 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-zinc-900'}`}
                 >
                   {oct}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wide">Pump Ethanol Content</span>
+              {pumpEthanol > 0 && (
+                <span className="ml-2 text-[10px] font-bold text-amber-500 uppercase tracking-wider">affects calc</span>
+              )}
+            </div>
+            <div className="flex rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+              {[0, 10].map(e => (
+                <button
+                  key={e}
+                  onClick={() => setPumpEthanol(e)}
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors ${pumpEthanol === e ? 'bg-slate-900 dark:bg-brand-500 text-white' : 'bg-white dark:bg-zinc-950 text-slate-500 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-zinc-900'}`}
+                >
+                  E{e}
                 </button>
               ))}
             </div>
@@ -133,7 +156,9 @@ const Calculator = () => {
               {/* Premium card */}
               <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-5 rounded-2xl flex justify-between items-center group hover:border-slate-300 dark:hover:border-white/10 transition-colors">
                 <div>
-                  <p className="text-slate-500 dark:text-gray-400 text-xs uppercase tracking-wider font-bold mb-1">Add {pumpOctane} Octane</p>
+                  <p className="text-slate-500 dark:text-gray-400 text-xs uppercase tracking-wider font-bold mb-1">
+                    Add {pumpOctane} Oct {result.pumpEthanol > 0 ? `(E${result.pumpEthanol})` : '(E0)'}
+                  </p>
                   <p className="text-3xl font-bold text-slate-800 dark:text-gray-100">
                     {result.pumpGallons} <span className="text-base text-slate-400 dark:text-gray-500 font-medium">gal</span>
                   </p>

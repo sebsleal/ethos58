@@ -22,6 +22,7 @@
  * @param {number}  params.current_ethanol_percent
  * @param {number}  params.target_ethanol_percent
  * @param {number}  params.tank_size
+ * @param {number}  [params.pump_ethanol_percent=0]  Ethanol % in pump gas (e.g. 10 for E10 93-octane)
  * @param {boolean} [params.precision_mode=false]
  */
 export function calculateBlend({
@@ -29,6 +30,7 @@ export function calculateBlend({
   current_ethanol_percent,
   target_ethanol_percent,
   tank_size,
+  pump_ethanol_percent = 0,
   precision_mode = false,
 }) {
   const warnings = [];
@@ -37,6 +39,7 @@ export function calculateBlend({
   const ce = parseFloat(current_ethanol_percent);
   const te = parseFloat(target_ethanol_percent);
   const ts = parseFloat(tank_size);
+  const pe = parseFloat(pump_ethanol_percent) / 100;
 
   if ([g, ce, te, ts].some(isNaN)) {
     throw new Error('All inputs must be valid numbers.');
@@ -50,13 +53,20 @@ export function calculateBlend({
   const currentEthanolGallons = g * (ce / 100);
   const targetEthanolGallons  = ts * (te / 100);
 
-  // Ideal E85 gallons to hit target when filling to tank_size
-  let e85Raw = (targetEthanolGallons - currentEthanolGallons) / 0.85;
-  let e85    = Math.max(0, Math.min(e85Raw, availableSpace));
-  let gas    = Math.max(0, availableSpace - e85);
+  // Solve for E85 accounting for pump gas ethanol content (pe):
+  //   currentEthanol + e85*0.85 + gas*pe = targetEthanol
+  //   gas = availableSpace - e85
+  //   => e85*(0.85 - pe) = targetEthanol - currentEthanol - availableSpace*pe
+  const denominator = 0.85 - pe;
+  let e85Raw = denominator !== 0
+    ? (targetEthanolGallons - currentEthanolGallons - availableSpace * pe) / denominator
+    : 0;
+
+  let e85 = Math.max(0, Math.min(e85Raw, availableSpace));
+  let gas = Math.max(0, availableSpace - e85);
 
   if (e85Raw < 0) {
-    warnings.push('Target ethanol is below what 93-octane dilution alone can achieve. Drain some fuel first.');
+    warnings.push(`Target ethanol is below what ${Math.round(pe * 100)}-octane dilution alone can achieve. Drain some fuel first.`);
     e85 = 0;
     gas = availableSpace;
   }
@@ -68,7 +78,7 @@ export function calculateBlend({
   }
 
   const totalFuel        = g + e85 + gas;
-  const totalEthanol     = currentEthanolGallons + e85 * 0.85;
+  const totalEthanol     = currentEthanolGallons + e85 * 0.85 + gas * pe;
   const resultingPercent = totalFuel > 0 ? (totalEthanol / totalFuel) * 100 : 0;
 
   // Standard output: 2 decimal places on gallons, 1 on percent
