@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api/mockApi';
+import { calculateBlend } from '../utils/blendMath';
 import { Droplet, Info, Settings2, AlertTriangle, ListOrdered } from 'lucide-react';
 
 const Calculator = () => {
@@ -11,7 +11,6 @@ const Calculator = () => {
   });
   const [precisionMode, setPrecisionMode] = useState(false);
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleChange = (e) => {
@@ -19,16 +18,28 @@ const Calculator = () => {
     setFormData(prev => ({ ...prev, [name]: parseFloat(value) || '' }));
   };
 
-  const calculate = async () => {
-    setLoading(true);
+  const calculate = () => {
     setError(null);
     try {
-      const res = await api.calculateBlend({ ...formData, precisionMode });
-      setResult(res.data);
+      const data = calculateBlend({
+        current_gallons:         formData.currentFuel,
+        current_ethanol_percent: formData.currentE,
+        target_ethanol_percent:  formData.targetE,
+        tank_size:               formData.tankSize,
+        precision_mode:          precisionMode,
+      });
+      setResult({
+        e85Gallons:          data.gallons_of_e85_to_add,
+        pumpGallons:         data.gallons_of_93_to_add,
+        resultingBlend:      data.resulting_percent,
+        precisionModeActive: data.precision_mode,
+        fillSteps:           data.fill_steps   ?? null,
+        precisionNote:       data.precision_note ?? null,
+        warnings:            data.warnings,
+      });
     } catch (err) {
       setError(err.message);
     }
-    setLoading(false);
   };
 
   return (
@@ -69,10 +80,9 @@ const Calculator = () => {
 
           <button
             onClick={calculate}
-            disabled={loading}
-            className="w-full mt-8 bg-slate-900 dark:bg-brand-500 hover:bg-slate-800 dark:hover:bg-brand-400 text-white py-3 rounded-xl font-bold tracking-wide transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-sm dark:shadow-none"
+            className="w-full mt-8 bg-slate-900 dark:bg-brand-500 hover:bg-slate-800 dark:hover:bg-brand-400 text-white py-3 rounded-xl font-bold tracking-wide transition-all flex justify-center items-center gap-2 shadow-sm dark:shadow-none"
           >
-            {loading ? 'CALCULATING...' : 'CALCULATE BLEND'}
+            CALCULATE BLEND
           </button>
 
           {error && (

@@ -1,0 +1,111 @@
+/**
+ * CSV parser with bootmod3 / MHD column detection.
+ * Browser-compatible — no Node.js dependencies.
+ */
+
+const COLUMN_MAP = {
+  time:        ['time', 'timestamp', 'elapsed', 'log time'],
+  rpm:         ['rpm', 'engine speed', 'engine_speed'],
+  load:        ['load_%', 'load (%)', 'load(%)', 'load', 'engine load', 'throttle position'],
+  afr:         ['air fuel ratio', 'air_fuel_ratio', 'afr', 'lambda'],
+  boost:       ['boost act', 'boost mean', 'manifold absolute pressure', 'boost pressure', 'boost_pressure', 'boost (psi)', 'boost_psi', 'boost', 'manifold pressure', 'map'],
+  iat:         ['intake air temp', 'intake_air_temp', 'intake air temperature',
+                'charge air temp', 'charge_air_temp', 'charge air temperature',
+                '^iat'],
+  hpfp:        ['hp fuel pressure actual', 'hpfp actual', 'hpfp_actual', 'high pressure fuel pump actual', 'hpfp act',
+                 'hpfp (psi)', 'hpfp_psi', 'hpfp', 'high pressure fuel pump', 'fuel pressure actual', 'fuel_pressure_actual'],
+  hpfp_target: ['hpfp target', 'hpfp_target', 'hp fuel pressure target', 'fuel pressure target', 'hpfp req'],
+  afr_target:  ['afr target', 'afr_target', 'air fuel ratio target'],
+  pedal:       ['pedal', 'accel pedal', 'accelerator pedal', 'accel_pedal', 'pedal position'],
+  throttle:    ['throttle', 'throttle position', 'throttle_position', 'throttle angle', 'throttle_angle'],
+};
+
+const TIMING_KEYWORDS  = ['timing cor', 'timing_cor', 'ign cor', 'ign_cor', 'ignition cor', 'knock'];
+const CYLINDER_KEYWORDS = ['cyl', 'cylinder', 'cyl_'];
+
+function parseRow(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function parseCsvText(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) throw new Error('CSV file is empty or could not be parsed.');
+  const headers = parseRow(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const values = parseRow(lines[i]);
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = values[idx] ?? ''; });
+    rows.push(row);
+  }
+  return { rows, headers };
+}
+
+function findColumn(headers, keywords) {
+  for (const keyword of keywords) {
+    const isStart = keyword.startsWith('^');
+    const kw = isStart ? keyword.slice(1).toLowerCase() : keyword.toLowerCase();
+    const match = headers.find(h => {
+      const hl = h.toLowerCase();
+      return isStart ? hl.startsWith(kw) : hl.includes(kw);
+    });
+    if (match) return match;
+  }
+  return null;
+}
+
+function findTimingColumns(headers) {
+  return headers.filter(h => {
+    const lower = h.toLowerCase();
+    const hasTimingWord = TIMING_KEYWORDS.some(kw => lower.includes(kw));
+    const hasCylWord    = CYLINDER_KEYWORDS.some(kw => lower.includes(kw));
+    return hasTimingWord && hasCylWord;
+  });
+}
+
+function detectBoostUnit(columnName) {
+  if (!columnName) return 'psi';
+  const lower = columnName.toLowerCase();
+  if (lower.includes('bar')) return 'bar';
+  if (lower.includes('kpa')) return 'kpa';
+  return 'psi';
+}
+
+export function parseCsv(csvText) {
+  const { rows, headers } = parseCsvText(csvText);
+
+  const columns = {};
+  for (const [key, keywords] of Object.entries(COLUMN_MAP)) {
+    columns[key] = findColumn(headers, keywords);
+  }
+
+  const timingColumns = findTimingColumns(headers);
+  const boostUnit     = detectBoostUnit(columns.boost);
+
+  return { rows, columns, timingColumns, boostUnit };
+}
+
+export function num(row, col) {
+  if (!col || row[col] === undefined || row[col] === '') return NaN;
+  return parseFloat(row[col]);
+}
+
+export function lambdaToAfr(lambda) {
+  return lambda * 14.7;
+}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UploadCloud, Activity, AlertTriangle, CheckCircle, BarChart2, XCircle, Lightbulb, Info } from 'lucide-react';
-import { api } from '../api/mockApi';
+import { analyzeLog } from '../utils/logAnalyzer';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, ReferenceDot } from 'recharts';
 
 const ETHANOL_OPTIONS = [0, 10, 30, 40, 50, 85];
@@ -33,18 +33,26 @@ const LogAnalyzer = () => {
     if (e.target.files?.[0]) processFile(e.target.files[0]);
   };
 
-  const processFile = async (file) => {
+  const processFile = (file) => {
     setLoading(true);
     setError(null);
     setAnalysis(null);
-    try {
-      const res = await api.analyzeLog(file, carDetails);
-      setAnalysis(res.data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const result = analyzeLog(e.target.result, file.name, carDetails);
+        setAnalysis(result);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.onerror = () => {
+      setError('Failed to read file.');
       setLoading(false);
-    }
+    };
+    reader.readAsText(file);
   };
 
   const reset = () => { setAnalysis(null); setError(null); };
