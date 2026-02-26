@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UploadCloud, Activity, AlertTriangle, CheckCircle, BarChart2, XCircle, Lightbulb, Info } from 'lucide-react';
 import { analyzeLog } from '../utils/logAnalyzer';
+import { saveRecentLog } from '../utils/storage';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, ReferenceDot } from 'recharts';
 
 const ETHANOL_OPTIONS = [0, 10, 30, 40, 50, 85];
@@ -41,6 +42,7 @@ const LogAnalyzer = () => {
     reader.onload = (e) => {
       try {
         const result = analyzeLog(e.target.result, file.name, carDetails);
+        saveRecentLog(result);
         setAnalysis(result);
       } catch (err) {
         setError(err.message);

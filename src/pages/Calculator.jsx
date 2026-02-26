@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { calculateBlend } from '../utils/blendMath';
+import { saveActiveBlend } from '../utils/storage';
 import { Droplet, Info, Settings2, AlertTriangle, ListOrdered } from 'lucide-react';
 
 const Calculator = () => {
@@ -28,7 +29,7 @@ const Calculator = () => {
         tank_size:               formData.tankSize,
         precision_mode:          precisionMode,
       });
-      setResult({
+      const mapped = {
         e85Gallons:          data.gallons_of_e85_to_add,
         pumpGallons:         data.gallons_of_93_to_add,
         resultingBlend:      data.resulting_percent,
@@ -36,7 +37,9 @@ const Calculator = () => {
         fillSteps:           data.fill_steps   ?? null,
         precisionNote:       data.precision_note ?? null,
         warnings:            data.warnings,
-      });
+      };
+      saveActiveBlend(mapped);
+      setResult(mapped);
     } catch (err) {
       setError(err.message);
     }
