@@ -53,7 +53,7 @@ const Dashboard = () => {
 
           {/* Quick Start */}
           <SectionPanel title="Quick Start" icon={Zap}>
-            <Link to="/analyzer" className="flex flex-col items-center justify-center h-48 mt-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/20 hover:bg-gray-50 dark:hover:bg-zinc-800/40 transition-colors text-gray-500 dark:text-zinc-400 cursor-pointer group">
+            <Link to="/viewer" className="flex flex-col items-center justify-center h-48 mt-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/20 hover:bg-gray-50 dark:hover:bg-zinc-800/40 transition-colors text-gray-500 dark:text-zinc-400 cursor-pointer group">
               <FileText size={32} className="mb-3 opacity-50 group-hover:opacity-80 group-hover:text-brand-500 transition-colors" strokeWidth={1.5} />
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Open Log Viewer</p>
               <p className="text-xs mt-1">Analyze a BM3 or MHD CSV</p>
