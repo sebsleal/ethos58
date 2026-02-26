@@ -11,6 +11,7 @@ const Calculator = () => {
     tankSize: 13.7,
   });
   const [precisionMode, setPrecisionMode] = useState(false);
+  const [pumpOctane, setPumpOctane] = useState(93);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
@@ -32,6 +33,7 @@ const Calculator = () => {
       const mapped = {
         e85Gallons:          data.gallons_of_e85_to_add,
         pumpGallons:         data.gallons_of_93_to_add,
+        pumpOctane,
         resultingBlend:      data.resulting_percent,
         precisionModeActive: data.precision_mode,
         fillSteps:           data.fill_steps   ?? null,
@@ -58,7 +60,7 @@ const Calculator = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Inputs */}
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6 shadow-sm dark:shadow-none">
-          <div className="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-white/5 pb-4">
+          <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-white/5 pb-4">
             <h2 className="text-base font-bold text-slate-900 dark:text-gray-100">Parameters</h2>
             <div className="flex items-center gap-3">
               <div className="text-right">
@@ -71,6 +73,21 @@ const Calculator = () => {
               >
                 <div className={`w-3.5 h-3.5 rounded-full bg-white absolute top-[3px] transition-transform shadow-sm dark:shadow-none ${precisionMode ? 'translate-x-5' : 'translate-x-1'}`} />
               </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wide">Pump Octane</span>
+            <div className="flex rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+              {[91, 93].map(oct => (
+                <button
+                  key={oct}
+                  onClick={() => setPumpOctane(oct)}
+                  className={`px-4 py-1.5 text-xs font-bold transition-colors ${pumpOctane === oct ? 'bg-slate-900 dark:bg-brand-500 text-white' : 'bg-white dark:bg-zinc-950 text-slate-500 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-zinc-900'}`}
+                >
+                  {oct}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -116,7 +133,7 @@ const Calculator = () => {
               {/* Premium card */}
               <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-5 rounded-2xl flex justify-between items-center group hover:border-slate-300 dark:hover:border-white/10 transition-colors">
                 <div>
-                  <p className="text-slate-500 dark:text-gray-400 text-xs uppercase tracking-wider font-bold mb-1">Add Premium (91/93)</p>
+                  <p className="text-slate-500 dark:text-gray-400 text-xs uppercase tracking-wider font-bold mb-1">Add {pumpOctane} Octane</p>
                   <p className="text-3xl font-bold text-slate-800 dark:text-gray-100">
                     {result.pumpGallons} <span className="text-base text-slate-400 dark:text-gray-500 font-medium">gal</span>
                   </p>

@@ -135,7 +135,7 @@ const Dashboard = () => {
                   </div>
                   <div className="bg-gray-50 dark:bg-zinc-900/40 border border-gray-200 dark:border-zinc-800 rounded-lg p-2 text-center">
                     <p className="text-gray-800 dark:text-white font-bold text-base">{activeBlend.pumpGallons} gal</p>
-                    <p className="text-gray-500 dark:text-zinc-400">93 Oct</p>
+                    <p className="text-gray-500 dark:text-zinc-400">{activeBlend.pumpOctane ?? 93} Oct</p>
                   </div>
                 </div>
               </div>
