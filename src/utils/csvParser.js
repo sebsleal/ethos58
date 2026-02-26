@@ -60,12 +60,13 @@ function parseCsvText(text) {
   return { rows, headers };
 }
 
-function findColumn(headers, keywords) {
+function findColumn(headers, keywords, exclude = []) {
   for (const keyword of keywords) {
     const isStart = keyword.startsWith('^');
     const kw = isStart ? keyword.slice(1).toLowerCase() : keyword.toLowerCase();
     const match = headers.find(h => {
       const hl = h.toLowerCase();
+      if (exclude.some(ex => hl.includes(ex))) return false;
       return isStart ? hl.startsWith(kw) : hl.includes(kw);
     });
     if (match) return match;
@@ -82,11 +83,24 @@ function findTimingColumns(headers) {
   });
 }
 
-function detectBoostUnit(columnName) {
+function detectBoostUnit(columnName, sampleValues = []) {
   if (!columnName) return 'psi';
   const lower = columnName.toLowerCase();
+  // Unit explicitly in column name — most reliable
   if (lower.includes('bar')) return 'bar';
   if (lower.includes('kpa')) return 'kpa';
+  if (lower.includes('psi')) return 'psi';
+
+  // No unit in column name — infer from value range
+  // Bar gauge boost: 0.5–2.5, absolute: 1.0–3.0  → max < 5
+  // kPa absolute: 100–310                          → max > 50
+  // psi gauge: 0–35, absolute: 14–50              → max 5–50
+  const valid = sampleValues.filter(v => !isNaN(v) && v > 0);
+  if (valid.length > 0) {
+    const maxVal = Math.max(...valid);
+    if (maxVal > 50) return 'kpa';
+    if (maxVal < 5)  return 'bar';
+  }
   return 'psi';
 }
 
@@ -95,11 +109,18 @@ export function parseCsv(csvText) {
 
   const columns = {};
   for (const [key, keywords] of Object.entries(COLUMN_MAP)) {
-    columns[key] = findColumn(headers, keywords);
+    // Explicitly exclude post-throttle columns for boost
+    const exclude = key === 'boost' ? ['post throttle', 'post-throttle'] : [];
+    columns[key] = findColumn(headers, keywords, exclude);
   }
 
   const timingColumns = findTimingColumns(headers);
-  const boostUnit     = detectBoostUnit(columns.boost);
+
+  // Sample boost values for unit detection when column name has no unit label
+  const boostSamples = columns.boost
+    ? rows.slice(0, 50).map(r => parseFloat(r[columns.boost])).filter(v => !isNaN(v))
+    : [];
+  const boostUnit = detectBoostUnit(columns.boost, boostSamples);
 
   return { rows, columns, timingColumns, boostUnit };
 }
