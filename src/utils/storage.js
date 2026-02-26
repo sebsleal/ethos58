@@ -5,6 +5,7 @@
 
 const KEYS = {
   RECENT_LOGS:   'ethos_recent_logs',
+  LOG_RESULTS:   'ethos_log_results',
   ACTIVE_BLEND:  'ethos_active_blend',
   SETTINGS:      'ethos_settings',
   THEME:         'theme',
@@ -24,9 +25,11 @@ export function getRecentLogs() {
 }
 
 export function saveRecentLog(analysis) {
+  const id = Date.now();
   const logs = getRecentLogs();
+
   const entry = {
-    id:        Date.now(),
+    id,
     filename:  analysis.filename,
     date:      new Date().toISOString(),
     status:    analysis.status,
@@ -37,12 +40,35 @@ export function saveRecentLog(analysis) {
     hpfp:      analysis.metrics?.hpfp?.actual ?? null,
     rowCount:  analysis.row_count ?? null,
   };
+
+  // Trim old full results before saving new ones to stay within storage limits
+  const oldLogs = logs.slice(MAX_RECENT_LOGS - 1);
+  oldLogs.forEach(l => localStorage.removeItem(`${KEYS.LOG_RESULTS}_${l.id}`));
+
   const updated = [entry, ...logs].slice(0, MAX_RECENT_LOGS);
   localStorage.setItem(KEYS.RECENT_LOGS, JSON.stringify(updated));
+
+  // Store full analysis result keyed by ID so it can be reopened
+  try {
+    localStorage.setItem(`${KEYS.LOG_RESULTS}_${id}`, JSON.stringify(analysis));
+  } catch {
+    // localStorage quota exceeded — skip full result storage
+  }
+
   return updated;
 }
 
+export function getLogResult(id) {
+  try {
+    return JSON.parse(localStorage.getItem(`${KEYS.LOG_RESULTS}_${id}`) || 'null');
+  } catch {
+    return null;
+  }
+}
+
 export function clearRecentLogs() {
+  const logs = getRecentLogs();
+  logs.forEach(l => localStorage.removeItem(`${KEYS.LOG_RESULTS}_${l.id}`));
   localStorage.removeItem(KEYS.RECENT_LOGS);
 }
 

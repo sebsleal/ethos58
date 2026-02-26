@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowRight, Activity, Droplet, FileText, Settings2, Zap, MonitorPlay, CheckCircle, AlertTriangle, XCircle, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { getRecentLogs, clearRecentLogs, getActiveBlend, clearActiveBlend } from '../utils/storage';
+import { Link, useNavigate } from 'react-router-dom';
+import { getRecentLogs, clearRecentLogs, getActiveBlend, clearActiveBlend, getLogResult } from '../utils/storage';
 
 const STATUS_ICON = {
   Safe:    <CheckCircle size={14} className="text-green-400" />,
@@ -23,6 +23,7 @@ function formatDate(iso) {
 const Dashboard = () => {
   const [recentLogs, setRecentLogs] = useState([]);
   const [activeBlend, setActiveBlend] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setRecentLogs(getRecentLogs());
@@ -77,7 +78,14 @@ const Dashboard = () => {
             ) : (
               <div className="mt-3 flex flex-col gap-2">
                 {recentLogs.map(log => (
-                  <Link key={log.id} to="/analyzer" className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-zinc-900/40 border border-gray-100 dark:border-zinc-800 hover:border-brand-500/30 transition-colors group">
+                  <button
+                    key={log.id}
+                    onClick={() => {
+                      const result = getLogResult(log.id);
+                      navigate('/analyzer', result ? { state: { analysis: result } } : {});
+                    }}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-zinc-900/40 border border-gray-100 dark:border-zinc-800 hover:border-brand-500/30 transition-colors group text-left w-full"
+                  >
                     <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase shrink-0 ${STATUS_COLOR[log.status] || STATUS_COLOR.Safe}`}>
                       {STATUS_ICON[log.status]}
                       {log.status}
@@ -88,7 +96,7 @@ const Dashboard = () => {
                     </div>
                     {log.afr && <p className="text-xs text-gray-400 dark:text-zinc-500 shrink-0">AFR {log.afr}</p>}
                     <ArrowRight size={14} className="text-gray-300 dark:text-zinc-600 group-hover:text-brand-400 transition-colors shrink-0" />
-                  </Link>
+                  </button>
                 ))}
               </div>
             )}

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { UploadCloud, Activity, AlertTriangle, CheckCircle, BarChart2, XCircle, Lightbulb, Info } from 'lucide-react';
 import { analyzeLog } from '../utils/logAnalyzer';
 import { saveRecentLog } from '../utils/storage';
@@ -9,12 +10,19 @@ const ENGINE_OPTIONS = ['B58 Gen1', 'B58 Gen2', 'S58', 'N55', 'N54', 'Other'];
 const TUNE_OPTIONS = ['Stage 1', 'Stage 2', 'Stage 2+', 'Custom E-tune'];
 
 const LogAnalyzer = () => {
+  const location = useLocation();
   const [carDetails, setCarDetails] = useState({ ethanol: 10, engine: 'B58 Gen1', tuneStage: 'Stage 1' });
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
   const unitPref = localStorage.getItem('ethos_units') || 'US';
+
+  useEffect(() => {
+    if (location.state?.analysis) {
+      setAnalysis(location.state.analysis);
+    }
+  }, []);
 
   const handleDrag = (e) => {
     e.preventDefault();
