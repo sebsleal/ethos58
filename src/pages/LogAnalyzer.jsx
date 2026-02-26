@@ -441,6 +441,28 @@ const LogAnalyzer = () => {
               </div>
             </div>
           </div>
+        {/* Detected Columns debug panel */}
+        {analysis.detectedColumns && (
+          <details className="mt-2">
+            <summary className="text-xs text-gray-400 dark:text-zinc-500 cursor-pointer select-none hover:text-gray-600 dark:hover:text-zinc-300 transition-colors w-fit">
+              Detected columns ({analysis.row_count} rows, boost: {analysis.detectedColumns.boostUnit})
+            </summary>
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[11px] font-mono">
+              {Object.entries(analysis.detectedColumns)
+                .filter(([k]) => !['boostUnit', 'timingColumns'].includes(k))
+                .map(([k, v]) => (
+                  <div key={k} className={`px-2 py-1 rounded border ${v ? 'bg-green-50 dark:bg-green-500/5 border-green-200 dark:border-green-500/20 text-green-700 dark:text-green-400' : 'bg-gray-50 dark:bg-zinc-900/40 border-gray-200 dark:border-zinc-800 text-gray-400 dark:text-zinc-600'}`}>
+                    <span className="font-bold">{k}:</span> {v ?? '—'}
+                  </div>
+                ))}
+              {analysis.detectedColumns.timingColumns?.length > 0 && (
+                <div className="col-span-full px-2 py-1 rounded border bg-green-50 dark:bg-green-500/5 border-green-200 dark:border-green-500/20 text-green-700 dark:text-green-400">
+                  <span className="font-bold">timing:</span> {analysis.detectedColumns.timingColumns.join(', ')}
+                </div>
+              )}
+            </div>
+          </details>
+        )}
         </div>
       )}
     </div>

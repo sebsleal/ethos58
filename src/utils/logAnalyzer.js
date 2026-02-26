@@ -636,6 +636,7 @@ export function analyzeLog(csvText, filename, carDetails = {}) {
     row_count: rows.length,
     status: overall,
     carDetails,
+    detectedColumns: { ...columns, boostUnit, timingColumns },
     metrics: {
       afr,
       hpfp,
