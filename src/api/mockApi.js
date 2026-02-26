@@ -4,7 +4,10 @@
  * and the server (snake_case per API spec).
  */
 
-const BASE = '/api';
+const IS_NATIVE = typeof window !== 'undefined' && window.location.protocol === 'capacitor:';
+const BASE = IS_NATIVE
+  ? 'https://ethos58-deploy.vercel.app/api'
+  : '/api';
 const TIMEOUT_MS = 15_000; // 15 s — prevents silently hung requests
 
 /**

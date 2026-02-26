@@ -1,0 +1,8 @@
+{
+  "appId": "com.ethos85.app",
+  "appName": "Ethos85",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
