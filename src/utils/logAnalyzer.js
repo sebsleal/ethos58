@@ -524,11 +524,16 @@ function buildChartData(rows, columns, isLambdaAfr, boostUnit, maxPoints = 150, 
       }
     }
 
+    const rawHpfpActual = num(row, hpfpCol);
+    const rawHpfpTarget = num(row, hpfpTargetCol);
+
     chartData.push({
       time: !isNaN(rawTime) ? roundN(rawTime, 2) : String(i),
       afrActual: afrDisplay,
       afrTarget: !isNaN(rawTarget) ? roundN(toAfr(rawTarget), 2) : undefined,
       boost: !isNaN(boostPsi) ? roundN(boostPsi, 1) : undefined,
+      hpfpActual: (!isNaN(rawHpfpActual) && rawHpfpActual > 0) ? roundN(rawHpfpActual, 0) : undefined,
+      hpfpTarget: (!isNaN(rawHpfpTarget) && rawHpfpTarget > 0) ? roundN(rawHpfpTarget, 0) : undefined,
       isLeanWarning,
       isHpfpWarning,
       isTimingWarning

@@ -380,31 +380,35 @@ const LogAnalyzer = () => {
 
               <div className="h-[350px] w-full bg-gray-50/50 dark:bg-surface-300/30 rounded-lg p-2 border border-gray-200 dark:border-white/5">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={analysis.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <LineChart data={analysis.chartData} margin={{ top: 10, right: 55, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272A" vertical={false} />
                     <XAxis dataKey="time" stroke="#71717A" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                     <YAxis yAxisId="left" stroke="#71717A" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
-                    <YAxis yAxisId="right" orientation="right" stroke="#71717A" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                    <YAxis yAxisId="boost" orientation="right" stroke="#71717A" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                    <YAxis yAxisId="hpfp" orientation="right" stroke="#a855f7" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} width={50} tickFormatter={v => `${(v/1000).toFixed(1)}k`} />
                     <Tooltip
                       contentStyle={{ backgroundColor: '#18181B', borderColor: '#27272A', color: '#F4F4F5', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
                       itemStyle={{ color: '#F4F4F5' }}
+                      formatter={(value, name) => name.startsWith('HPFP') ? [`${value} psi`, name] : [value, name]}
                     />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
                     <Line yAxisId="left" type="monotone" dataKey="afrActual" stroke="#14b8a6" name="AFR Actual" strokeWidth={2} dot={AfrWarningDot} connectNulls={false} />
                     <Line yAxisId="left" type="monotone" dataKey="afrTarget" stroke="#f43f5e" name="AFR Target" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls={false} />
-                    <Line yAxisId="right" type="monotone" dataKey="boost" stroke="#3b82f6" name="Boost (psi)" strokeWidth={2} dot={BoostWarningDot} connectNulls={false} />
+                    <Line yAxisId="boost" type="monotone" dataKey="boost" stroke="#3b82f6" name="Boost (psi)" strokeWidth={2} dot={BoostWarningDot} connectNulls={false} />
+                    <Line yAxisId="hpfp" type="monotone" dataKey="hpfpActual" stroke="#a855f7" name="HPFP Actual" strokeWidth={1.5} dot={false} connectNulls={false} />
+                    <Line yAxisId="hpfp" type="monotone" dataKey="hpfpTarget" stroke="#d8b4fe" name="HPFP Target" strokeWidth={1.5} strokeDasharray="4 4" dot={false} connectNulls={false} />
 
                     {/* Single worst HPFP drop — one vertical line + one dot */}
                     {(() => {
                       const pt = analysis.chartData.find(p => p.isHpfpWarning);
                       if (!pt) return null;
                       return <>
-                        <ReferenceLine x={pt.time} yAxisId="left"
+                        <ReferenceLine x={pt.time} yAxisId="boost"
                           stroke="#f97316" strokeWidth={1.5} strokeOpacity={0.8} strokeDasharray="4 3"
                           label={{ value: 'HPFP ↓', fill: '#f97316', fontSize: 9, fontWeight: 700, position: 'insideTopLeft', dy: -2 }}
                         />
-                        {pt.afrActual != null && (
-                          <ReferenceDot x={pt.time} y={pt.afrActual} yAxisId="left"
+                        {pt.hpfpActual != null && (
+                          <ReferenceDot x={pt.time} y={pt.hpfpActual} yAxisId="hpfp"
                             r={5} fill="#f97316" stroke="#111113" strokeWidth={2}
                           />
                         )}
