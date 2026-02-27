@@ -244,9 +244,10 @@ function analyzeHpfp(rows, columns, boostUnit) {
   }
 
   let maxDropPct = 0;
+  let worstActual = null;
 
   if (targetCol) {
-    // Check the entire log for crashes, but only when target pressure is 
+    // Check the entire log for crashes, but only when target pressure is
     // high enough (e.g. > 1000 psi) to ignore normal idle fluctuations.
     for (const row of rows) {
       const a = num(row, actualCol);
@@ -254,12 +255,12 @@ function analyzeHpfp(rows, columns, boostUnit) {
       if (isNaN(a) || isNaN(t) || t <= 1000 || a <= 0) continue;
 
       const dropPct = ((t - a) / t) * 100;
-      if (dropPct > maxDropPct) maxDropPct = dropPct;
+      if (dropPct > maxDropPct) { maxDropPct = dropPct; worstActual = a; }
     }
   } else {
     for (const a of actuals) {
       const dropPct = ((peakActual - a) / peakActual) * 100;
-      if (dropPct > maxDropPct) maxDropPct = dropPct;
+      if (dropPct > maxDropPct) { maxDropPct = dropPct; worstActual = a; }
     }
   }
 
@@ -274,8 +275,15 @@ function analyzeHpfp(rows, columns, boostUnit) {
     note = `HPFP dipped ${roundN(maxDropPct, 1)}% under load — monitor closely.`;
   }
 
+  // When there's a meaningful drop, show the worst actual (matches chart dot).
+  // When safe, show the avg so the user sees typical operating pressure.
+  const displayActual = (status !== 'Safe' && worstActual !== null)
+    ? roundN(worstActual, 0)
+    : roundN(avgActual, 0);
+
   return {
-    actual: roundN(avgActual, 0),
+    actual: displayActual,
+    avgActual: roundN(avgActual, 0),
     target: avgTarget ? roundN(avgTarget, 0) : roundN(peakActual, 0),
     max_drop_pct: roundN(maxDropPct, 1),
     status,
@@ -573,7 +581,7 @@ function buildKeyPoints(afr, hpfp, iat, timing, carDetails) {
         ? `High-ethanol blends demand higher fuel flow — ensure your LPFP (low-side pump) is upgraded for E${ethanol}.`
         : `Check LPFP health, fuel filter condition, and HPFP cam lobe wear.`;
       points.push(
-        `HPFP averaged ${hpfp.actual} psi under load with a ${hpfp.max_drop_pct}% drop vs target. ${fuelNote}`
+        `HPFP dropped to ${hpfp.actual} psi (avg ${hpfp.avgActual} psi) — a ${hpfp.max_drop_pct}% drop vs target. ${fuelNote}`
       );
     } else if (isHighEthanol) {
       points.push(

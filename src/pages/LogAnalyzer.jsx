@@ -296,7 +296,11 @@ const LogAnalyzer = () => {
             <MetricBox
               title="HPFP"
               value={analysis.metrics.hpfp.actual != null ? `${analysis.metrics.hpfp.actual} psi` : '—'}
-              target={analysis.metrics.hpfp.target != null ? `Target: ${analysis.metrics.hpfp.target} psi` : 'No data'}
+              target={
+                analysis.metrics.hpfp.status !== 'Safe' && analysis.metrics.hpfp.avgActual != null
+                  ? `Worst drop · avg ${analysis.metrics.hpfp.avgActual} psi`
+                  : analysis.metrics.hpfp.target != null ? `Target: ${analysis.metrics.hpfp.target} psi` : 'No data'
+              }
               status={analysis.metrics.hpfp.status}
             />
             <MetricBox
